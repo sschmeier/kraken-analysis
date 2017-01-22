@@ -107,7 +107,7 @@ printf "done\n\n" >> $logfile
 
 # create domain overview
 printf "## Domain overview:\n" >> $logfile
-python create-domain-overview.py $PREFIX-kraken/*.report-nonzero.txt.gz >> $logfile
+python create-kraken-domainoverview.py $PREFIX-kraken/*.report-nonzero.txt.gz >> $logfile
 printf "done\n\n" >> $logfile
 #-----------------------------------------------    
 
