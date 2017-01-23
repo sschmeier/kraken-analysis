@@ -68,10 +68,10 @@ mkdir ./$PREFIX-krona
 #-----------------------------------------------    
 
 # 2: we run kraken for each sample, e.g. 1 file per sample
-#printf "## Creating and executing kraken calls script:\n"
-#python create-kraken-calls.py $KRAKENDB $FASTADIR/ $PREFIX-kraken/ > $PREFIX-kraken-script.sh
-#bash $PREFIX-kraken-script.sh >> $logfile
-#printf "done\n\n" >> $logfile
+printf "## Creating and executing kraken calls script:\n"
+python create-kraken-calls.py $KRAKENDB $FASTADIR/ $PREFIX-kraken/ > $PREFIX-kraken-script.sh
+bash $PREFIX-kraken-script.sh >> $logfile
+printf "done\n\n" >> $logfile
 #-----------------------------------------------    
         
 # some classification stat
