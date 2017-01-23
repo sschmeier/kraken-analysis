@@ -1,6 +1,8 @@
 # Kraken analysis
 
-Analyse a bunch of fasta-files. 
+Analyse a bunch of fasta-files with Kraken. Create combined reports. 
+
+## USAGE
 
 ```bash
 $ bash run-kraken-analysis.sh
@@ -33,3 +35,14 @@ $ conda config --add channels r
 $ conda config --add channels bioconda
 ```
 
+## RESULTS
+
+Among other, two files are so far of particular interest
+
+1. PREFIX-kraken-reports-combined-scaled.txt.gz
+2. PREFIX-kraken-reports-combined.txt.gz
+
+They contain a "excel-readble" table with numbers of reads of all taxa found in all analysed fasta-files.
+The second file is scaled/normalised according the number of mapped reads.
+
+The script also creates krona plots for each sample analysed.
