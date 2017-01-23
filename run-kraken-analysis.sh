@@ -6,25 +6,34 @@ set -u
 # USAGE:
 # sript.sh PREFIX FASTADIR KRAKENDB
 #
-if [ "$#" -ne 4 ]; then
-    printf "USAGE: bash run-kraken-analysis.sh CONDAENV PREFIX FASTADIR KRAKENDB\n"
+if [ "$#" -ne 5 ]; then
+    printf "USAGE: bash run-kraken-analysis.sh CONDAENV PREFIX FASTADIR KRAKENDB KRONATAX\n"
     printf "\n"
     printf "    CONDAENV: Name of conda env to source before running analysis.\n"
     printf "              Will be created if not exit. Assumes bioconda.\n"
-    printf "    PREFIX  : Prefix for output directories\n"
-    printf "    FASTADIR: Path to directory with gzipped fasta-files to process\n"
-    printf "    KRAKENDB: Path to directory with kraken database\n"
+    printf "    PREFIX  : Prefix for output directories.\n"
+    printf "    FASTADIR: Path to directory with gzipped fasta-files to process.\n"
+    printf "    KRAKENDB: Path to directory with kraken database.\n"
+    printf "    KRONATAX: Path to directory with krona taxonomy.\n"
     printf "\n"
     exit
 fi
 
 # used for output directories prefix
 PREFIX=$2
-# path to dir with fasta-files
-FASTADIR=$3
-# the path to the krakendb-dir
-KRAKENDB=$4
+# path to dir with fasta-files, get the abs path
+FASTADIR=$(readlink -f $3) 
+# the path to the krakendb-dir, get the abs path
+KRAKENDB=$(readlink -f $4)
+KRONATAX=$(readlink -f $5)
+
+SRC_DIR=$(pwd)
 #######################################
+
+# logfile name
+logfile=$PREFIX-kraken-log.txt
+printf "Logfile created: $logfile\n"
+date > $logfile
 
 # 0: Requirements 
 # Load conda env with installed kraken-all, krona, numpy
@@ -41,16 +50,12 @@ else
     source activate $ENV
 fi
 
-# logfile name
-logfile=$PREFIX-kraken-log.txt
-printf "Logfile created: $logfile\n"
-
-date >> $logfile
+printf "\nWORKINGDIR: $SRC_DIR\n" >> $logfile
 printf "CONDAENV: $ENV\n"  >> $logfile
 printf "PREFIX: $PREFIX\n"  >> $logfile
 printf "FASTADIR: $FASTADIR\n"  >> $logfile
-printf "KRAKENDB: $KRAKENDB\n"  >> $logfile
-
+printf "KRAKENDB: $KRAKENDB\n\n"  >> $logfile
+printf "KRONATAX: $KRONATAX\n\n"  >> $logfile
 
 printf "## Writing conda requirements file.\n" >> $logfile
 conda list -e > $PREFIX-conda-requirements.txt
@@ -58,15 +63,15 @@ printf "done\n\n" >> $logfile
 #-----------------------------------------------    
 
 # 1: set up result-dir structure
-#-mkdir ./$PREFIX-kraken
-#-mkdir ./$PREFIX-krona
+mkdir ./$PREFIX-kraken
+mkdir ./$PREFIX-krona
 #-----------------------------------------------    
 
 # 2: we run kraken for each sample, e.g. 1 file per sample
-#-printf "## Creating and executing kraken calls script:\n"
-#-python create-kraken-calls.py $KRAKENDB $FASTADIR/ $PREFIX-kraken/ > $PREFIX-kraken-script.sh
-#-bash $PREFIX-kraken-script.sh >> $logfile
-#-printf "done\n\n" >> $logfile
+#printf "## Creating and executing kraken calls script:\n"
+#python create-kraken-calls.py $KRAKENDB $FASTADIR/ $PREFIX-kraken/ > $PREFIX-kraken-script.sh
+#bash $PREFIX-kraken-script.sh >> $logfile
+#printf "done\n\n" >> $logfile
 #-----------------------------------------------    
         
 # some classification stat
@@ -120,13 +125,12 @@ printf "done\n\n" >> $logfile
 # 3: Visualise with krona
 printf "## Creating krona visualisations for:\n" >> $logfile
 for fn in $PREFIX-kraken/*.kraken; do 
-    printf "\n$fn\n" >> $logfile;
+    printf "$fn\n" >> $logfile;
     cat $fn | cut -f 2,3 > $fn.kronainput;  
-    ktImportTaxonomy $fn.kronainput -o $PREFIX-krona/$(basename $fn).html >> $logfile;
-    rm $fn.kronainput; 
 done
+ktImportTaxonomy -tax $KRONATAX -o $PREFIX-krona/$PREFIX.html $PREFIX-kraken/*.kronainput >> $logfile;
 
-zip -r $PREFIX-krona.zip $PREFIX-krona >> $logfile
+zip -r $PREFIX-krona.zip $PREFIX-krona/ >> $logfile
 printf "done\n\n" >> $logfile
 #-----------------------------------------------    
 
@@ -134,7 +138,10 @@ printf "done\n\n" >> $logfile
 printf "## Cleaning up:\n" >> $logfile 
 gzip $PREFIX-kraken/*.kraken
 gzip $PREFIX-kraken/*.err
+rm $PREFIX-kraken/*.kronainput; 
 rm $PREFIX-temp-alltax.txt
-printf "FINSISHED\n" >> $logfile
-printf "FINISHED.\n"
-    
+printf "done\n\n" >> $logfile
+
+date >> $logfile
+printf "FINISHED\n" >> $logfile
+printf "FINISHED\n"
