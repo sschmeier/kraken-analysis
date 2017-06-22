@@ -123,6 +123,11 @@ printf "done\n\n" >> $logfile
 #-----------------------------------------------    
 
 # 3: Visualise with krona
+# copy used krona tax
+mkdir ./$PREFIX-krona-tax
+printf "## Copy KRONA taxonomy for safekeeping into results-dir\n" >> $logfile
+cp $KRONATAX ./$PREFIX-krona-tax/
+
 printf "## Creating krona visualisations for:\n" >> $logfile
 for fn in $PREFIX-kraken/*.kraken; do 
     printf "$fn\n" >> $logfile;
