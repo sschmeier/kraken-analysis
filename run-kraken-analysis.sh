@@ -103,7 +103,7 @@ zip $PREFIX-kraken-reports-nonzero.zip $PREFIX-kraken/*.report-nonzero.txt
 gzip $PREFIX-kraken/*.report-nonzero.txt
 printf "done\n\n" >> $logfile 
 
-# combine all reports into one
+## combine all reports into one
 printf "## Combining kraken reports:\n" >> $logfile 
 ls $PREFIX-kraken/*.kraken | head -1 | xargs -I pattern kraken-report --show-zeros --db $KRAKENDB pattern | cut -f 5,6 > $PREFIX-temp-alltax.txt
 python combine-kraken-reports.py -o $PREFIX-kraken-reports-combined.txt.gz $PREFIX-temp-alltax.txt $PREFIX-kraken/*.report-nonzero.txt.gz
@@ -125,15 +125,26 @@ printf "done\n\n" >> $logfile
 # 3: Visualise with krona
 # copy used krona tax
 mkdir ./$PREFIX-krona-tax
-printf "## Copy KRONA taxonomy for safekeeping into results-dir\n" >> $logfile
-cp $KRONATAX ./$PREFIX-krona-tax/
+# test if korna taxonomy exists if not download
+if [ ! -f $KRONATAX/taxonomy.tab ]; then
+    printf "## Krona taxonomy not found. Downloading...\n" >> $logfile
+    ktUpdateTaxonomy.sh ./$PREFIX-krona-tax
+    KRONATAX=./$PREFIX-krona-tax
+else
+    printf "## Copy KRONA taxonomy for safekeeping into resultsdir.\n" >> $logfile
+    cp $KRONATAX/taxonomy.tab ./$PREFIX-krona-tax/
+fi
+
+# Update krona taxonomy to use:
+KRONATAX=./$PREFIX-krona-tax
+printf "## KRONATAX PATH UPDATED: $KRONATAX\n"
 
 printf "## Creating krona visualisations for:\n" >> $logfile
 for fn in $PREFIX-kraken/*.kraken; do 
     printf "$fn\n" >> $logfile;
     cat $fn | cut -f 2,3 > $fn.kronainput;  
 done
-ktImportTaxonomy -tax $KRONATAX -o $PREFIX-krona/$PREFIX.html $PREFIX-kraken/*.kronainput >> $logfile;
+ktImportTaxonomy -tax $KRONATAX -o $PREFIX-krona/krona.html $PREFIX-kraken/*.kronainput >> $logfile;
 
 zip -r $PREFIX-krona.zip $PREFIX-krona/ >> $logfile
 printf "done\n\n" >> $logfile
